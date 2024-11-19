@@ -48,3 +48,19 @@ router.put("/api/events/eventId"),
         res.status(500).json({ error: "Failed to update the event" });
       });
   };
+
+// DELETE /api/events/:eventId - Deletes a specific event by id
+router.delete("/api/events/:eventId", isAuthenticated, (req, res, next) => {
+  const { eventId } = req.params;
+
+  Event.findByIdAndDelete(eventId)
+    .then(() => {
+      res.status(204).send();
+    })
+    .catch((error) => {
+      next(error);
+      console.error("Error deleting event...");
+      res.status(500).json({ error: "Failed to delete the event" });
+    });
+});
+module.exports = router;
