@@ -2,8 +2,20 @@ const router = require("express").Router();
 const Event = require("../models/Event.model");
 const isAuthenticated = require("../middleware/jwt.middleware");
 
+// Middleware to check organizer role
+const isOrganizer = (req, res, next) => {
+  const userRole = req.payload.typeofuser;
+  if (userRole === "organizer") {
+    return next();
+  } else {
+    return res
+      .status(403)
+      .json({ message: "Access forbidden: Organizers only." });
+  }
+};
+
 //POST/api/events CREATE A NEW EVENT
-router.post("/api/events", (req, res, next) => {
+router.post("/api/events", isAuthenticated, isOrganizer, (req, res, next) => {
   const newEvent = req.body;
   Event.create(newEvent)
     .then((eventFromDB) => {
@@ -45,34 +57,44 @@ router.get("/api/events/:eventsId", (req, res, next) => {
 
 //PUT/ api/events/eventid - update a spesific event by id
 
-router.put("/api/events/:eventId", (req, res, next) => {
-  const { eventId } = req.params;
-  const newDetails = req.body;
+router.put(
+  "/api/events/:eventId",
+  isAuthenticated,
+  isOrganizer,
+  (req, res, next) => {
+    const { eventId } = req.params;
+    const newDetails = req.body;
 
-  Event.findByIdAndUpdate(eventId, newDetails, { new: true })
-    .then((eventFromDB) => {
-      if (!eventFromDB) {
-        return res.status(404).json({ error: "Event not found" });
-      }
-      res.status(200).json(eventFromDB);
-    })
-    .catch((err) => {
-      next(err);
-    });
-});
+    Event.findByIdAndUpdate(eventId, newDetails, { new: true })
+      .then((eventFromDB) => {
+        if (!eventFromDB) {
+          return res.status(404).json({ error: "Event not found" });
+        }
+        res.status(200).json(eventFromDB);
+      })
+      .catch((err) => {
+        next(err);
+      });
+  }
+);
 
 // DELETE /api/events/:eventId - Deletes a specific event by id
-router.delete("/api/events/:eventId", isAuthenticated, (req, res, next) => {
-  const { eventId } = req.params;
+router.delete(
+  "/api/events/:eventId",
+  isAuthenticated,
+  isOrganizer,
+  (req, res, next) => {
+    const { eventId } = req.params;
 
-  Event.findByIdAndDelete(eventId)
-    .then(() => {
-      res.status(204).send();
-    })
-    .catch((err) => {
-      next(err);
-      console.error("Error deleting event...");
-      res.status(500).json({ error: "Failed to delete the event" });
-    });
-});
+    Event.findByIdAndDelete(eventId)
+      .then(() => {
+        res.status(204).send();
+      })
+      .catch((err) => {
+        next(err);
+        console.error("Error deleting event...");
+        res.status(500).json({ error: "Failed to delete the event" });
+      });
+  }
+);
 module.exports = router;
