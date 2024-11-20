@@ -16,10 +16,33 @@ const isOrganizer = (req, res, next) => {
 
 //POST/api/events CREATE A NEW EVENT
 router.post("/api/events", isAuthenticated, isOrganizer, (req, res, next) => {
-  const newEvent = req.body;
-  Event.create(newEvent)
-    .then((eventFromDB) => {
-      res.status(201).json(eventFromDB);
+  const { title, description, dateTime, pricing, map, image, venue } = req.body;
+
+  // Validate required fields
+  if (
+    !title ||
+    !description ||
+    !dateTime ||
+    !pricing?.min ||
+    !pricing?.max ||
+    !venue
+  ) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
+  // Create the new event
+  Event.create({
+    title,
+    description,
+    dateTime,
+    pricing,
+    map,
+    image,
+    venue,
+    organizer: req.payload._id,
+  })
+    .then((event) => {
+      res.status(201).json(event);
     })
     .catch((err) => {
       next(err);
@@ -44,6 +67,7 @@ router.get("/api/events/:eventsId", (req, res, next) => {
   const { eventId } = req.params.id;
 
   Event.findById(eventId)
+    .populate("venue")
     .then((eventFromDB) => {
       if (!eventFromDB) {
         return res.status(404).json({ error: "Event not found" });
@@ -66,6 +90,7 @@ router.put(
     const newDetails = req.body;
 
     Event.findByIdAndUpdate(eventId, newDetails, { new: true })
+      .populate("venue")
       .then((eventFromDB) => {
         if (!eventFromDB) {
           return res.status(404).json({ error: "Event not found" });
