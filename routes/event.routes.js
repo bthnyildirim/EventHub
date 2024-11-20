@@ -9,9 +9,20 @@ router.post("/api/events", (req, res, next) => {
     .then((eventFromDB) => {
       res.status(201).json(eventFromDB);
     })
-    .catch((error) => {
-      next(error);
-      res.status(500).json({ error: "Failed to create a new event" });
+    .catch((err) => {
+      next(err);
+    });
+});
+
+// GET /api/events - Retrieves all of the events in the database collection
+router.get("/api/events", (req, res, next) => {
+  Event.find()
+    .populate("venue")
+    .then((eventFromDB) => {
+      res.status(200).json(eventFromDB);
+    })
+    .catch((err) => {
+      next(err);
     });
 });
 
@@ -21,33 +32,34 @@ router.get("/api/events/:eventsId", (req, res, next) => {
   const { eventId } = req.params.id;
 
   Event.findById(eventId)
-    .populate("venue")
     .then((eventFromDB) => {
+      if (!eventFromDB) {
+        return res.status(404).json({ error: "Event not found" });
+      }
       res.status(200).json(eventFromDB);
     })
-    .catch((error) => {
-      next(error);
-      res.status(500).json({ error: "Failed to get this event detail" });
+    .catch((err) => {
+      next(err);
     });
 });
 
 //PUT/ api/events/eventid - update a spesific event by id
 
-router.put("/api/events/eventId"),
-  (req, res, next) => {
-    const { eventId } = req.params;
-    const newDetails = req.body;
+router.put("/api/events/:eventId", (req, res, next) => {
+  const { eventId } = req.params;
+  const newDetails = req.body;
 
-    Event.findByIdAndUpdate(eventId, newDetails, { new: true })
-      .then((eventFromDB) => {
-        res.status(200).json(eventFromDB);
-      })
-      .catch((error) => {
-        next(error);
-        console.error(error);
-        res.status(500).json({ error: "Failed to update the event" });
-      });
-  };
+  Event.findByIdAndUpdate(eventId, newDetails, { new: true })
+    .then((eventFromDB) => {
+      if (!eventFromDB) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      res.status(200).json(eventFromDB);
+    })
+    .catch((err) => {
+      next(err);
+    });
+});
 
 // DELETE /api/events/:eventId - Deletes a specific event by id
 router.delete("/api/events/:eventId", isAuthenticated, (req, res, next) => {
@@ -57,8 +69,8 @@ router.delete("/api/events/:eventId", isAuthenticated, (req, res, next) => {
     .then(() => {
       res.status(204).send();
     })
-    .catch((error) => {
-      next(error);
+    .catch((err) => {
+      next(err);
       console.error("Error deleting event...");
       res.status(500).json({ error: "Failed to delete the event" });
     });
