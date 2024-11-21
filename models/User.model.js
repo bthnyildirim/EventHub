@@ -20,7 +20,7 @@ const userSchema = new Schema(
       type: String,
       required: [true, "Name is required."],
     },
-    UserType: { type: String, enum: ["fan", "organizer"], required: true },
+    userType: { type: String, enum: ["fan", "organizer"], required: true },
   },
   {
     // this second object adds extra properties: `createdAt` and `updatedAt`
