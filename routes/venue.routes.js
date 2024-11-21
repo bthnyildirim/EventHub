@@ -16,7 +16,7 @@ const isOrganizer = (req, res, next) => {
 };
 
 // POST /venues - Create a new venue (Organizers only)
-router.post("/api/venues", isAuthenticated, isOrganizer, (req, res, next) => {
+router.post("/", isAuthenticated, isOrganizer, (req, res, next) => {
   const { name, capacity, location } = req.body;
 
   // Validate required fields
@@ -34,7 +34,7 @@ router.post("/api/venues", isAuthenticated, isOrganizer, (req, res, next) => {
 });
 
 // GET /venues - Retrieve all venues (Accessible to everyone)
-router.get("/venues", (req, res, next) => {
+router.get("/", (req, res, next) => {
   Venue.find()
     .then((venues) => {
       res.status(200).json(venues);
@@ -45,7 +45,7 @@ router.get("/venues", (req, res, next) => {
 });
 
 // GET /venues/:id - Retrieve details of a specific venue
-router.get("/venues/:id", (req, res, next) => {
+router.get("/:id", (req, res, next) => {
   const { id } = req.params;
 
   Venue.findById(id)
@@ -61,7 +61,7 @@ router.get("/venues/:id", (req, res, next) => {
 });
 
 // PUT /venues/:id - Update a venue (Organizers only)
-router.put("/venues/:id", isAuthenticated, isOrganizer, (req, res, next) => {
+router.put("/:id", isAuthenticated, isOrganizer, (req, res, next) => {
   const { id } = req.params;
   const updatedDetails = req.body;
 
@@ -78,7 +78,7 @@ router.put("/venues/:id", isAuthenticated, isOrganizer, (req, res, next) => {
 });
 
 // DELETE /venues/:id - Delete a venue (Organizers only)
-router.delete("/venues/:id", isAuthenticated, isOrganizer, (req, res, next) => {
+router.delete("/:id", isAuthenticated, isOrganizer, (req, res, next) => {
   const { id } = req.params;
 
   Venue.findByIdAndDelete(id)

@@ -1,10 +1,11 @@
 const router = require("express").Router();
 const Event = require("../models/Event.model");
-const isAuthenticated = require("../middleware/jwt.middleware");
+const { isAuthenticated } = require("../middleware/jwt.middleware");
 
 // Middleware to check organizer role
 const isOrganizer = (req, res, next) => {
-  const userRole = req.payload.typeofuser;
+  console.log("Payload:", req.payload); // Debugging
+  const userRole = req.payload.userType; // Ensure userType exists in the payload
   if (userRole === "organizer") {
     return next();
   } else {
@@ -14,8 +15,8 @@ const isOrganizer = (req, res, next) => {
   }
 };
 
-//POST/api/events CREATE A NEW EVENT
-router.post("/api/events", isAuthenticated, isOrganizer, (req, res, next) => {
+// POST /events - Create a new event
+router.post("/events", isAuthenticated, isOrganizer, (req, res, next) => {
   const { title, description, dateTime, pricing, map, image, venue } = req.body;
 
   // Validate required fields
@@ -30,7 +31,6 @@ router.post("/api/events", isAuthenticated, isOrganizer, (req, res, next) => {
     return res.status(400).json({ message: "Missing required fields" });
   }
 
-  // Create the new event
   Event.create({
     title,
     description,
@@ -41,85 +41,70 @@ router.post("/api/events", isAuthenticated, isOrganizer, (req, res, next) => {
     venue,
     organizer: req.payload._id,
   })
-    .then((event) => {
-      res.status(201).json(event);
-    })
-    .catch((err) => {
-      next(err);
-    });
+    .then((event) => res.status(201).json(event))
+    .catch((err) => next(err));
 });
 
-// GET /api/events - Retrieves all of the events in the database collection
-router.get("/api/events", (req, res, next) => {
+// GET /events - Retrieve all events
+router.get("/events", (req, res, next) => {
   Event.find()
     .populate("venue")
-    .then((eventFromDB) => {
-      res.status(200).json(eventFromDB);
-    })
-    .catch((err) => {
-      next(err);
-    });
+    .then((events) => res.status(200).json(events))
+    .catch((err) => next(err));
 });
 
-//GET/api/events/:eventid - retrieves a spesific event by id
+// GET /events/:eventsId - Retrieve a specific event
+router.get("/events/:eventsId", (req, res, next) => {
+  const { eventsId } = req.params;
 
-router.get("/api/events/:eventsId", (req, res, next) => {
-  const { eventId } = req.params.id;
-
-  Event.findById(eventId)
+  Event.findById(eventsId)
     .populate("venue")
-    .then((eventFromDB) => {
-      if (!eventFromDB) {
+    .then((event) => {
+      if (!event) {
         return res.status(404).json({ error: "Event not found" });
       }
-      res.status(200).json(eventFromDB);
+      res.status(200).json(event);
     })
-    .catch((err) => {
-      next(err);
-    });
+    .catch((err) => next(err));
 });
 
-//PUT/ api/events/eventid - update a spesific event by id
-
+// PUT /events/:eventId - Update a specific event
 router.put(
-  "/api/events/:eventId",
+  "/events/:eventId",
   isAuthenticated,
   isOrganizer,
   (req, res, next) => {
     const { eventId } = req.params;
     const newDetails = req.body;
 
+    if (!newDetails.title && !newDetails.description && !newDetails.dateTime) {
+      return res.status(400).json({ message: "No valid fields to update" });
+    }
+
     Event.findByIdAndUpdate(eventId, newDetails, { new: true })
       .populate("venue")
-      .then((eventFromDB) => {
-        if (!eventFromDB) {
+      .then((updatedEvent) => {
+        if (!updatedEvent) {
           return res.status(404).json({ error: "Event not found" });
         }
-        res.status(200).json(eventFromDB);
+        res.status(200).json(updatedEvent);
       })
-      .catch((err) => {
-        next(err);
-      });
+      .catch((err) => next(err));
   }
 );
 
-// DELETE /api/events/:eventId - Deletes a specific event by id
+// DELETE /events/:eventId - Delete a specific event
 router.delete(
-  "/api/events/:eventId",
+  "/events/:eventId",
   isAuthenticated,
   isOrganizer,
   (req, res, next) => {
     const { eventId } = req.params;
 
     Event.findByIdAndDelete(eventId)
-      .then(() => {
-        res.status(204).send();
-      })
-      .catch((err) => {
-        next(err);
-        console.error("Error deleting event...");
-        res.status(500).json({ error: "Failed to delete the event" });
-      });
+      .then(() => res.status(204).send())
+      .catch((err) => next(err));
   }
 );
+
 module.exports = router;

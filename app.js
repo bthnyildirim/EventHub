@@ -29,6 +29,12 @@ app.use("/user", userRoutes);
 const indexRoutes = require("./routes/index.routes");
 app.use("/api", indexRoutes);
 
+const eventRoutes = require("./routes/event.routes");
+app.use("/api", eventRoutes);
+
+const venueRoutes = require("./routes/venue.routes");
+app.use("/venues", venueRoutes);
+
 // ❗ To handle errors. Routes that don't exist or errors that you handle in specific routes
 require("./error-handling")(app);
 
