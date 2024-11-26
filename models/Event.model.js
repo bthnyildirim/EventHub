@@ -15,8 +15,8 @@ const EventSchema = new Schema({
     min: { type: Number, required: [true, "Minimum price is required."] },
     max: { type: Number, required: [true, "Maximum Price is required."] },
   },
-  map: { type: String, required: true },
-  image: { type: String, required: true },
+  map: { type: String },
+  image: { type: String },
   organizer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

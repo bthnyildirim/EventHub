@@ -10,10 +10,11 @@ require("./db");
 const express = require("express");
 
 const app = express();
-
+const path = require("path");
 // Middleware to parse JSON bodies
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use("/uploads", express.static("uploads"));
 
 // ℹ️ This function is getting exported from the config folder. It runs most pieces of middleware
 require("./config")(app);
@@ -33,10 +34,13 @@ const eventRoutes = require("./routes/event.routes");
 app.use("/api", eventRoutes);
 
 const venueRoutes = require("./routes/venue.routes");
-app.use("/venues", venueRoutes);
+app.use("/api/venues", venueRoutes);
 
 // ❗ To handle errors. Routes that don't exist or errors that you handle in specific routes
 require("./error-handling")(app);
+
+// Serve the uploads folder statically
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Use CORS middleware
 

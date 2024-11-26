@@ -7,7 +7,7 @@ const { isAuthenticated } = require("../middleware/jwt.middleware");
 const isOrganizer = (req, res, next) => {
   const userRole = req.payload.userType;
   if (userRole === "organizer") {
-    return next(); // User is an organizer, proceed
+    return next();
   } else {
     return res
       .status(403)
@@ -15,7 +15,7 @@ const isOrganizer = (req, res, next) => {
   }
 };
 
-// POST /venues - Create a new venue (Organizers only)
+// POST /api/venues - Create a new venue (Organizers only)
 router.post("/", isAuthenticated, isOrganizer, (req, res, next) => {
   const { name, capacity, location } = req.body;
 
@@ -29,22 +29,24 @@ router.post("/", isAuthenticated, isOrganizer, (req, res, next) => {
       res.status(201).json(venue);
     })
     .catch((err) => {
+      console.error("Error creating venue:", err.message);
       next(err);
     });
 });
 
-// GET /venues - Retrieve all venues (Accessible to everyone)
+// GET /api/venues - Retrieve all venues (Accessible to everyone, including fans)
 router.get("/", (req, res, next) => {
   Venue.find()
     .then((venues) => {
       res.status(200).json(venues);
     })
     .catch((err) => {
+      console.error("Error retrieving venues:", err.message);
       next(err);
     });
 });
 
-// GET /venues/:id - Retrieve details of a specific venue
+// GET /api/venues/:id - Retrieve details of a specific venue (Accessible to everyone, including fans)
 router.get("/:id", (req, res, next) => {
   const { id } = req.params;
 
@@ -56,16 +58,20 @@ router.get("/:id", (req, res, next) => {
       res.status(200).json(venue);
     })
     .catch((err) => {
+      console.error("Error retrieving venue details:", err.message);
       next(err);
     });
 });
 
-// PUT /venues/:id - Update a venue (Organizers only)
+// PUT /api/venues/:id - Update a venue (Organizers only)
 router.put("/:id", isAuthenticated, isOrganizer, (req, res, next) => {
   const { id } = req.params;
   const updatedDetails = req.body;
 
-  Venue.findByIdAndUpdate(id, updatedDetails, { new: true })
+  Venue.findByIdAndUpdate(id, updatedDetails, {
+    new: true,
+    runValidators: true,
+  })
     .then((venue) => {
       if (!venue) {
         return res.status(404).json({ message: "Venue not found" });
@@ -73,11 +79,12 @@ router.put("/:id", isAuthenticated, isOrganizer, (req, res, next) => {
       res.status(200).json(venue);
     })
     .catch((err) => {
+      console.error("Error updating venue:", err.message);
       next(err);
     });
 });
 
-// DELETE /venues/:id - Delete a venue (Organizers only)
+// DELETE /api/venues/:id - Delete a venue (Organizers only)
 router.delete("/:id", isAuthenticated, isOrganizer, (req, res, next) => {
   const { id } = req.params;
 
@@ -89,6 +96,7 @@ router.delete("/:id", isAuthenticated, isOrganizer, (req, res, next) => {
       res.status(204).send();
     })
     .catch((err) => {
+      console.error("Error deleting venue:", err.message);
       next(err);
     });
 });
