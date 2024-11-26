@@ -45,7 +45,7 @@ router.post("/events", isAuthenticated, isOrganizer, (req, res, next) => {
     .catch((err) => next(err));
 });
 
-// GET /events - Retrieve all events
+// GET /api/events - Retrieve all events
 router.get("/events", (req, res, next) => {
   Event.find()
     .populate("venue")
